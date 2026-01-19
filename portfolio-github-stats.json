@@ -1,0 +1,186 @@
+{
+  "name": "portfolio-github-stats",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -96,
+        -48
+      ],
+      "id": "4a60644f-20ba-40b8-b0f7-965dfd07a7a7",
+      "name": "Every 1 hour"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        112
+      ],
+      "id": "30b1933a-4d08-44f9-bef6-0ef3a486c299",
+      "name": "On App Start / Manual"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/graphql",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\": \"query { viewer { login followers { totalCount } repositories(first: 100, ownerAffiliations: OWNER, isFork: false) { totalCount nodes { stargazers { totalCount } } } contributionsCollection { contributionCalendar { totalContributions } } } }\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        160,
+        16
+      ],
+      "id": "a3970b85-0dd9-46eb-b580-599750fc480f",
+      "name": "GraphQL",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VJJqhDUQY5DOia8Q",
+          "name": "Header Auth account"
+        },
+        "githubApi": {
+          "id": "tMgrPHNZkHcBSmQ6",
+          "name": "GitHub-Portfolio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ambil data dari GitHub\nconst data = $input.first().json.data.viewer;\n\n// 1. Hitung Total Stars (Looping semua repo)\nlet totalStars = 0;\nif (data.repositories.nodes) {\n  for (const repo of data.repositories.nodes) {\n    totalStars += repo.stargazers.totalCount;\n  }\n}\n\n// 2. Siapkan data lain\nconst stats = {\n  followers: data.followers.totalCount,\n  repos: data.repositories.totalCount,\n  contributions: data.contributionsCollection.contributionCalendar.totalContributions,\n  stars: totalStars,\n  last_fetched: new Date().toISOString()\n};\n\n// 3. Return format Supabase\nreturn {\n  json: {\n    platform: \"github\",\n    stats: stats\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        16
+      ],
+      "id": "fe76607a-082f-4ab7-816b-49a6591142ed",
+      "name": "Calculate Stars"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "platform_stats",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "platform",
+              "condition": "eq",
+              "keyValue": "={{ $json.platform }}"
+            }
+          ]
+        },
+        "dataToSend": "autoMapInputData"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        576,
+        16
+      ],
+      "id": "294dcfd5-b109-49f5-9aeb-05aa334c69d8",
+      "name": "Update a row Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "h4k5YA7fYcsjF35W",
+          "name": "Supabase Portfolio Stats"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On App Start / Manual": {
+      "main": [
+        [
+          {
+            "node": "GraphQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 1 hour": {
+      "main": [
+        [
+          {
+            "node": "GraphQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GraphQL": {
+      "main": [
+        [
+          {
+            "node": "Calculate Stars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Stars": {
+      "main": [
+        [
+          {
+            "node": "Update a row Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "ccb7668b-411d-49eb-af37-37f56eee697a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "37c66f27f19a42458ede6336939db7c94b24476e9651972bcb9c0725fbba68b2"
+  },
+  "id": "Pq5iQ2AtzYsGFBf5IlyJ4",
+  "tags": [
+    {
+      "updatedAt": "2026-01-07T04:58:37.869Z",
+      "createdAt": "2026-01-07T04:58:37.869Z",
+      "id": "W13SvI2LXyZ0LcHa",
+      "name": "n8n"
+    },
+    {
+      "updatedAt": "2026-01-07T07:55:10.082Z",
+      "createdAt": "2026-01-07T07:55:10.082Z",
+      "id": "evjXY0WlsiEtE4Hy",
+      "name": "github"
+    },
+    {
+      "updatedAt": "2026-01-14T05:14:12.090Z",
+      "createdAt": "2026-01-14T05:14:12.090Z",
+      "id": "mncJN18udUw8cVGA",
+      "name": "portfolio"
+    }
+  ]
+}
