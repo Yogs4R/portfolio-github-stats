@@ -14,7 +14,7 @@ This repository hosts an n8n workflow designed to track your open-source impact 
 
 ## 📸 Workflow Preview
 
-![Workflow Overview](./workflow-image-github.png)
+![Workflow Overview](./workflow-image-github-2.png)
 
 ## ✨ Features
 
